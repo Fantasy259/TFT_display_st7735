@@ -4,6 +4,7 @@
 #include <sys/param.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "src/drivers/display/st7789/lv_st7789.h"
 #include "esp_timer.h"
 //#include "esp_lcd_panel_io.h"
 //#include "esp_lcd_panel_vendor.h"
@@ -14,7 +15,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "lvgl.h"
-#include "src/drivers/display/st7735/lv_st7735.h"
+
 
 #define TFT_MOSI    25 //23
 #define TFT_SCLK    26 // 18
@@ -25,8 +26,8 @@
 #define LEDBackLight  27
 
 // The pixel number in horizontal and vertical
-#define EXAMPLE_LCD_H_RES              128
-#define EXAMPLE_LCD_V_RES              160
+#define EXAMPLE_LCD_H_RES             240//128
+#define EXAMPLE_LCD_V_RES             320// 160
 
 static const char *TAG ="MyMain";
 
@@ -86,8 +87,8 @@ int32_t my_lcd_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_siz
 {
 
 //    ESP_LOGI("ST7735", "send_color: cmd=0x%02X, size=%d", cmd ? cmd[0] : 0, (int)param_size);
-         esp_err_t ret;
-
+        
+/*
     // RGB565 in BRG565 Farben tauschen 
     for(size_t i = 0; i < param_size; i += 2)
     {
@@ -102,7 +103,8 @@ int32_t my_lcd_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_siz
         param[i]   = (bgr >> 8) & 0xFF;
         param[i+1] = bgr & 0xFF;
     }
-
+*/ 
+    esp_err_t ret;
     // 1. Command schicken (z. B. 0x2C)
     if (cmd != NULL && cmd_size > 0) {
         gpio_set_level(TFT_DC, 0);
@@ -190,23 +192,23 @@ void app_main()
 
     // Erstellen des Displays 
     lv_lcd_flag_t flags = LV_LCD_FLAG_NONE;
-    lv_display_t *disp = lv_st7735_create(EXAMPLE_LCD_H_RES, EXAMPLE_LCD_V_RES, flags, my_lcd_send_cmd, my_lcd_send_color);
+    lv_display_t *disp = lv_st7789_create(EXAMPLE_LCD_H_RES, EXAMPLE_LCD_V_RES, flags, my_lcd_send_cmd, my_lcd_send_color);
    
     // Anlegen des Datenbuffers (Buffer nur 1/10 der Fläche)
-    static uint8_t draw_buf1[128 * 160 / 10 * 2]; // 1/10 Fläche * 2 bytes per Pixel (RGB565)
+    static uint8_t draw_buf1[EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES / 10 * 2]; // 1/10 Fläche * 2 bytes per Pixel (RGB565)
     lv_display_set_buffers(disp, draw_buf1, NULL, sizeof(draw_buf1), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
    lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
 
-    lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
-    lv_st7735_set_gap(disp, 0, 0); // falls nötig anpassen
+    lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_0);
+ //   lv_st7735_set_gap(disp, 0, 0); // falls nötig anpassen
 
     // Beispile inhalt erstellen 
-    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x000000), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x02ff), LV_PART_MAIN);
     //Create a white label, set its text and align it to the center
     lv_obj_t * label = lv_label_create(lv_screen_active());
     lv_label_set_text(label, "Hello world 1");
-    lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffff), LV_PART_MAIN);
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 
     // Start LVGL working Task 
